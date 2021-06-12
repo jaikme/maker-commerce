@@ -5,6 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "MakerECommece",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/MakerECommece.out",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
             "name": "clang - Build and debug active file",
             "type": "cppdbg",
             "request": "launch",
