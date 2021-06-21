@@ -6,11 +6,19 @@
 
 #IncludeRegexTransform: 
 
+/Users/jaikme/UVA-Workspace/maker-commerce/ANSI-color-codes.h
+
 /Users/jaikme/UVA-Workspace/maker-commerce/main.c
 stdio.h
 -
 stdlib.h
 -
+stdbool.h
+-
 string.h
 -
+locale.h
+-
+ANSI-color-codes.h
+/Users/jaikme/UVA-Workspace/maker-commerce/ANSI-color-codes.h
 

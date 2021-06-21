@@ -1,90 +1,148 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
+#include <locale.h>
+#include "ANSI-color-codes.h"
 
-struct Produtos {
-  char nomeProd[30], categoria[20], descricao[70];
+// Protótipos de funções
+int getMenuOption();
+
+// ──────────────────────────────────────
+// Definições globais
+#define MAX_STR_LENGTH 64
+#define HEADER_NAME "SUNLIGHT YELLOW"
+
+// ──────────────────────────────────────
+// Tipos customizados do programa
+typedef char String[MAX_STR_LENGTH];
+
+// ──────────────────────────────────────
+// Constantes do programa
+#define MAX_STR_LENGTH 64
+#define HEADER_NAME "SUNLIGHT YELLOW"
+
+
+/*
+ typedef struct {
+      char nome[30];
+      float matematica, fisica, media;
+  } Alunos;
+ */
+
+/*
+typedef struct {
+  int index;
+  char label;
+} MenuOption;
+ */
+
+/* typedef struct {
+  char nomeProd[30], categoria[20], descricao[70] ;
   int codigo, qtdEst, qtdMinEst;
   float valor;
+} Produto;
+
+struct Estoque {
+  Produto produtos;
 };
 
-// struct cliente
-// struct carrinho de compras
+struct MenuItem {
+  char value[30];
+}; */
+
+
+// ──────────────────────────────────────
+// Métodos do Cabeçalho
+
+void printDoubleLine(int width) {
+  unsigned i = width;
+  while(i > 0) {
+    i--;
+    printf("═");
+  }
+}
+
+void displayHeading(String value) {
+  /*
+   * width  - largura interna da caixa(não contando as bordas)
+   * length - quantidade e caracteres
+   */
+  int width = 60, length = 0;
+
+  // Calcula a quantidade e caracteres da string value
+  while (value[length] != '\0') { ++length; }
+
+  // Desenha o início da caixa do cabeçalho com cor amarela
+  printf("%s╔", HYELLOW);
+  // Desenha a borda da caixa
+  printDoubleLine(width);
+  // Finaliza a primeira linha da caixa e inícia a próxima
+  printf("╗\n║");
+
+  // Desenha o miolo da caixa com o título
+  int paddingWidth = (width - length) / 2;
+  int paddingOdd = length % 2 ? paddingWidth + 1 : paddingWidth;
+
+  printf("%s%*s%s%*s%s", IYELLOW, paddingWidth, "", value, paddingOdd, "", reset);
+  printf("%s║\n╚", HYELLOW);
+
+  // Desenha a borda da caixa
+  printDoubleLine(width);
+
+  // Finaliza a última linha da caixa e reseta a cor
+  printf("╝\n%s", reset);
+}
+
+
+
+// ──────────────────────────────────────
+// Métodos do Menu
+
+void displayText(String value) {
+  printf("\n%s", value);
+}
+
+//void displayMenuItem(MenuOption opt) {
+//  printf("\n░ %d → %s", opt.index, opt.label);
+//}
+
+void displayMenuItem(int index, String label) {
+  printf("\n%s%d → %s%s", HBLU, index, label, reset);
+}
+
 
 int main() {
-  // declarando uma variável do tipo struct
-  struct Produtos cadProduto[5];
-  int i, pesqProd, achei = 0, posicao, compra;
-  // entrada de dados
-  printf("\n-------------------- Cadastro de Produtos ---------------------\n");
-  for (i = 0; i < 3; i++) {
-    printf("Codigo..: ");
-    scanf("%d", &cadProduto[i].codigo);
-    printf("Quantidade em Estoque..: ");
-    scanf("%d", &cadProduto[i].qtdEst);
-    printf("Quantidade em Minima no Estoque..: ");
-    scanf("%d", &cadProduto[i].qtdMinEst);
-    printf("Valor do Produto..: ");
-    scanf("%f", &cadProduto[i].valor);
-    printf(
-        "\n-----------------------------------------------------------------"
-        "\n");
-  }
-  // imprimindo os dados cadastrados
-  printf(
-      "\n\n-------------------- Pesquisando um Produto " \
-      "---------------------\n");
+  // Aceitando Acentos
+  setlocale (LC_ALL, "");
 
-  printf(
-      "\n Produtos em Estoque "
-      "----------------------------------------------\n");
-  printf("\nCodigo\n");
+  displayHeading(HEADER_NAME);
 
-  for (i = 0; i < 3; i++) {
-    printf("%d \n", cadProduto[i].codigo);
-  }
+  displayText("BEM-VINDO, SELECIONE UMA OPÇÃO:\n");
 
-  printf(
-      "\n----------------------------------------------------------------\n");
-  printf("\nQual o codigo do produto deseja pesquisar..: ");
-  scanf("%d", &pesqProd);
-  for (i = 0; i < 3; i++) {
-    if (cadProduto[i].codigo == pesqProd) {
-      posicao = i;
-      achei = 1;
-      break;
-    }
-  }
+  displayMenuItem(1, "Cadastrar produtos");
+  displayMenuItem(2, "Remover produto");
 
-  if (achei == 0) {
-    printf("\nProduto não encontado.");
-  } else {
-    printf("\nDados do Produto ---------------------\n");
-    printf("Codigo..: %d", cadProduto[posicao].codigo);
-    printf("\nQuantidade em Estoque..: %d", cadProduto[posicao].qtdEst);
-    printf("\nQuantidade em Minima no Estoque..: %d",
-           cadProduto[posicao].qtdMinEst);
-    printf("\nValor do Produto..: %.2f", cadProduto[posicao].valor);
-    printf(
-        "\n-----------------------------------------------------------------"
-        "\n");
-  }
+  displayMenuItem(2, "Relatório de produtos");
+  displayMenuItem(3, "Cadastrar produtos");
+  displayMenuItem(4, "Cadastrar produtos");
 
-  // Listar Produtos que estão abaixo da quantidade mínima de estoque
-  printf(
-      "\n\n--------- Relatorio de Produtos abaixo do Estoque Mininimo "
-      "-----------\n");
-  printf("Codigo\t Estoque \t QtdComprar\n");
+//  displayMenuItem(1, "Cadastrar produtos");
+//  displayMenuItem(2, "Listar produtos");
+//  displayMenuItem(2, "Listar produtos");
 
-  for (i = 0; i < 3; i++) {
-    if (cadProduto[i].qtdEst < cadProduto[i].qtdMinEst) {
-      compra = cadProduto[i].qtdMinEst - cadProduto[i].qtdEst;
-      printf("\n%d \t %d \t\t %d", cadProduto[i].codigo, cadProduto[i].qtdEst,
-             compra);
-    }
-  }
-  printf(
-      "\n-----------------------------------------------------------------\n");
+  int menuCode = getMenuOption();
 
+  printf("%d", menuCode);
   return 0;
+}
+
+// Pergunta ao usuário qual item do menu deseja
+int getMenuOption() {
+  int n;
+
+  displayText("\nCodigo: ");
+  scanf("%d", &n);
+
+  return n;
 }
