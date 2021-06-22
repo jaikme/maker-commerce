@@ -35,6 +35,7 @@ const int IDX_CHOSEN_SELECT = 4;
 const int IDX_CHOSEN_REMOVE = 5;
 const int IDX_PRODUCTS_CHOSEN = 6;
 const int IDX_PRODUCTS_PAY = 7;
+const int IDX_USER_INFO = 8;
 
 // ──────────────────────────────────────
 // Variáveis e estruturas
@@ -54,7 +55,7 @@ struct Products {
 };
 
 int totalProducts = 0, totalChosen = 0, renderMenuHeader = false;
-struct Products products[MAX_PRODUCTS];
+struct Products products[MAX_PRODUCTS] = {};
 
 //// carrinho
 struct ProductsChosenCart {
@@ -62,7 +63,7 @@ struct ProductsChosenCart {
   float total;
 };
 
-struct ProductsChosenCart cart;
+struct ProductsChosenCart cart = {};
 
 // ──────────────────────────────────────
 // Métodos de utilidades
@@ -170,13 +171,25 @@ void displayChoiceHeading(string value) {
   printf(reset "\n");
 }
 
+void diplayTotal(float total) {
+  string totallabel;
+  int length;
+  snprintf(totallabel, sizeof(totallabel), " =\tTOTAL: R$ %.2f   ", total);
+  length = calcLength(totallabel);
+  int rightPad = BOX_WIDTH - length - 1;
+  printf(IBBYELLOW "%s%*s" reset "\n", totallabel, rightPad, "");
+}
 
 // ──────────────────────────────────────
 // Métodos do Menu
-void displayCurrentUserInfo() {
-  printf("\n" YELB BBLK "Bem vinda(o) %s " reset "\n", user.name);
+void displayCurrentUserInfo(bool pause) {
+  printf("\n" HYELLOW "Bem vinda(o) %s " reset "\n", user.name);
   printf(BYEL "\n💰 Seu saldo é: R$ %.2f" reset, user.balance);
   printf(GRN "\n🔋 Tempo de recarga: %.2fh" reset, user.rechargeTime);
+  if(pause) {
+    printf("\n");
+    pressAnyContinue();
+  }
 }
 
 void displayMenuTitle(string value) {
@@ -198,7 +211,7 @@ void renderMenu() {
   */
   displayMenuTitle("Opções de administração:");
 
-  displayMenuItem(IDX_REGISTER_PRODUCT, "Cadastrar produtos");
+  displayMenuItem(IDX_REGISTER_PRODUCT, "Cadastrar/Atualizar produto");
   displayMenuItem(IDX_REMOVE_PRODUCT, "Remover produto");
   displayMenuItem(IDX_REPORT_PRODUCT, "Relatório de produtos");
   printf("\n");
@@ -217,11 +230,11 @@ void renderMenu() {
   printf("\n");
 
   displayMenuTitle("Outros");
+  displayMenuItem(IDX_USER_INFO, "Meu saldo");
   displayMenuItem(0, "Sair");
 
   renderMenuHeader = true;
 }
-
 
 // ──────────────────────────────────────
 // Administração de produtos
@@ -323,7 +336,7 @@ void productsReport() {
 // Opções de compras
 
 void selectProduct() {
-  int cod, foundIndex = -1;
+  int cod, i, foundIndex = -1, foundSame = false;
 
   // Cabeçalho do que o usuário escolheu
   printf("\n");
@@ -340,8 +353,8 @@ void selectProduct() {
     return;
   }
 
-  for (int i = 0; i < totalProducts; ++i) {
-    // Posição e propriedades do item na tabela
+  // Procura pelo código do produto nos cadastros
+  for (i = 0; i < totalProducts; ++i) {
     int prodCod = products[i].cod;
     if(prodCod == cod) {
       foundIndex = i;
@@ -349,19 +362,33 @@ void selectProduct() {
     }
   }
 
-  if(foundIndex == -1) {
-    printError("Produto não encontrado!");
+  // Verifica se o produto ja não foi selecionado para arrecadar
+  if(totalChosen > 0 && foundIndex != -1) {
+    for (i = 0; i < totalChosen; ++i) {
+      if(cart.products[i].cod == products[foundIndex].cod) {
+        foundSame = true;
+        break;
+      }
+    }
+  }
+
+  if(foundSame) {
+    printError("Produto já selecionado!\n");
+  } else if(foundIndex == -1) {
+    printError("Produto não encontrado!\n");
   } else {
     displayText(CYN "Produto selecionado:" reset "\n\n");
     struct Products chosen = products[foundIndex];
 
     // Exibe informações do item escolhido
     displayProductRow(foundIndex + 1, chosen.cod, chosen.name, chosen.price);
-    // Adiciona no carrinho
-    cart.products[foundIndex] = chosen;
-    cart.total += chosen.price;
     // Atualiza a contagem total de produtos
     totalChosen++;
+    printf("totalChosen = %d", totalChosen);
+    // Adiciona no carrinho
+    cart.products[totalChosen - 1] = chosen;
+    cart.total += chosen.price;
+
     printSuccess("Produto adicionado no carrinho");
   }
 
@@ -406,10 +433,12 @@ void unselectProduct() {
   if(foundIndex == -1) {
     printError(errorMsg);
   } else {
+    cart.total = cart.total - cart.products[foundIndex].price;
+
     // Remove o elemento movendo suas posições pra esquerda
     for (i = foundIndex + 1; i < totalChosen; ++i) {
       int currentPos = i - 1;
-      // Pega a posição atual e substitui pela seguinte
+      // Pega a posição atual e substitui pela seguinte consecutivamente
       cart.products[currentPos] = cart.products[i];
     }
 
@@ -427,16 +456,21 @@ void productsChosen(bool showTotal, bool askPay) {
   displayChoiceHeading(askPay ? "Pagar" : "Produtos selecionados");
 
   int i;
+  float total = 0;
 
   if(totalChosen > 0) {
     for (i = 0; i < totalChosen; ++i) {
       // Posição e propriedades do item na tabela
       struct Products p = cart.products[i];
       displayProductRow(i + 1, p.cod, p.name, p.price);
+      total += p.price;
     }
 
+    // Sincroniza valor total
+    cart.total = total;
+
     if(showTotal) {
-      printf(BBLK YELB " =\tTOTAL: R$ %.2f   " reset "\n", cart.total);
+      diplayTotal(cart.total);
     }
 
     if(askPay) {
@@ -449,25 +483,33 @@ void productsChosen(bool showTotal, bool askPay) {
         answer[k] = tolower(answer[k]);
       }
 
+      // Pagamento de o usuário escolheu sim
       if(
           strcmp(answer, "sim") == 0 ||
           strcmp(answer, "s") == 0)
       {
-        // Limpando carrinho
-        for (i = 0; i < totalChosen; ++i) {
-          // Posição e propriedades do item na tabela
-          cart.products[i].cod = 0;
-          strcpy(cart.products[i].name, "");
-          cart.products[i].price = 0;
+
+        // Mostra erro se o usuário não tiver saldo disponível
+        if(user.balance < cart.total) {
+          printError("Desculpa, mas seu saldo não é suficiente\n");
+        } else {
+          // Limpando carrinho
+          for (i = 0; i < totalChosen; ++i) {
+            // Posição e propriedades do item na tabela
+            cart.products[i].cod = 0;
+            strcpy(cart.products[i].name, "");
+            cart.products[i].price = 0;
+          }
+
+          user.balance -= cart.total;
+          cart.total = 0;
+          totalChosen = 0;
+
+          printf(BLU "\n🎉 Parabéns - Você arrecadou os produtos com sucesso!\n" reset);
+          printf("   Obrigado por usar nossos serviços\n");
+          printf("\n💰 Novo saldo: " IBBYELLOW " R$ %.2f " reset, user.balance);
+          printf("\n");
         }
-
-        user.balance -= cart.total;
-        cart.total = 0;
-        totalChosen = 0;
-
-        printf(BLU "\n🎉 Parabéns - Você arrecadou os produtos com sucesso!\n" reset);
-        printf("\n💰 Novo saldo: " BBLK YELB " R$ %.2f " reset, user.balance);
-        printf("\n");
       }
     }
 
@@ -480,31 +522,37 @@ void productsChosen(bool showTotal, bool askPay) {
 }
 
 // ──────────────────────────────────────6
-// Ponto de entrada
+// Entrada do programa
 
 int main() {
   // Aceitando Acentos
   setlocale (LC_ALL, "");
   int menuCode;
 
+    //Remover comentários para começar com dados prontos para testes em desenvolvimento
 
-  strcpy(products[0].name, "Teste 1");
-  products[0].cod = 100;
-  products[0].price = 5.75;
+    strcpy(products[0].name, "Pack 6 Garrafas de D'Água");
+    products[0].cod = 100;
+    products[0].price = 5.75;
 
-  strcpy(products[1].name, "Teste 2");
-  products[1].cod = 200;
-  products[1].price = 24.10;
+    strcpy(products[1].name, "Cesta Básica");
+    products[1].cod = 200;
+    products[1].price = 24.10;
 
-  strcpy(products[2].name, "Teste 3");
-  products[2].cod = 300;
-  products[2].price = 24.10;
+    strcpy(products[2].name, "Kit Médico");
+    products[2].cod = 300;
+    products[2].price = 124.10;
 
-  totalProducts = 3;
+    totalProducts = 3;
+    /**/
 
-  cart.products[0] = products[1];
-  cart.total = products[1].price;
-  totalChosen = 1;
+    //Remover comentários para começar com carrinho preenchido
+
+    cart.products[0] = products[0];
+    cart.total = products[0].price;
+    totalChosen = 1;
+  /**/
+
 
   // Informações do usuário
   strcpy(user.name, "Adriana Sicsu");
@@ -517,7 +565,7 @@ int main() {
   displayHeading(HEADER_NAME);
 
   // Mostra mensagem de boas vindas
-  displayCurrentUserInfo();
+  displayCurrentUserInfo(false);
 
   displayText("\nO QUE DESEJA FAZER?\n");
 
@@ -554,6 +602,10 @@ int main() {
 
       case IDX_PRODUCTS_PAY:
         productsChosen(true, true);
+        break;
+
+      case IDX_USER_INFO:
+        displayCurrentUserInfo(true);
         break;
 
       default:
