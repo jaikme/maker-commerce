@@ -7,13 +7,14 @@
 
 // Protótipos de funções
 int getMenuOption();
+void productsReport();
 
 // ──────────────────────────────────────
 // Definições globais
 #define HEADER_NAME "SUNLIGHT YELLOW"
 #define MAX_STR_LENGTH 64
 #define BOX_WIDTH 60
-#define MAX_PRODUCTS 1
+#define MAX_PRODUCTS 3
 
 // ──────────────────────────────────────
 // Tipos customizados do programa
@@ -34,7 +35,7 @@ struct User {
 struct Products {
   char name[MAX_STR_LENGTH];
   int cod;
-  float amount;
+  float price;
 };
 
 int totalProducts = 0, renderMenuHeader = false;
@@ -96,10 +97,12 @@ void printSuccess(string value) {
   printf("\n✅ %s%s%s\n", HGRENN, value, reset);
 }
 
-void pressAnyContinue(string value) {
+void pressAnyContinue() {
   string buffer;
-  sprintf(buffer, HGRENN "\n→ %s\n" reset, value);
+  sprintf(buffer, HGRENN "\n→ %s\n" reset, "Pressione qualquer tecla para continuar...");
   printInput(buffer);
+  fflush(stdin);
+  getchar();
 }
 
 // ──────────────────────────────────────
@@ -200,12 +203,11 @@ void renderMenu() {
    */
   displayMenuTitle("Opções de arrecadação:");
 
-  displayMenuItem(4, "Adicionar produtos");
-  displayMenuItem(5, "Remove produtos");
+  displayMenuItem(4, "Selecionar produto para arrecadar");
+  displayMenuItem(5, "Cancelar uma produto");
   displayMenuItem(6, "Produtos selecionados");
   displayMenuItem(7, "Pagar");
   printf("\n");
-
 
   displayMenuTitle("Outros");
   displayMenuItem(0, "Sair");
@@ -221,11 +223,9 @@ void registerProduct() {
 
   // Valida a quantidade de produtos que podem ser cadastrados
   if(totalProducts >= MAX_PRODUCTS) {
-    printError("Número máximo de produtos cadastrados!");
+    printError("Número máximo de produtos cadastrados!\n");
     return;
   }
-
-
 
   // Cabeçalho do que o usuário escolheu
   printf("\n");
@@ -240,7 +240,7 @@ void registerProduct() {
   fgets(products[totalProducts].name, MAX_STR_LENGTH, stdin);
 
   printInput("Valor do Produto");
-  scanf("%f", &products[totalProducts].amount);
+  scanf("%f", &products[totalProducts].price);
 
   totalProducts++;
 
@@ -249,18 +249,50 @@ void registerProduct() {
 }
 
 void removeProduct() {
-  int cod;
+  int cod, i, j, foundIndex = -1;
+  string errorMsg = "Produto não encontrado ou inexistente!";
   // Cabeçalho do que o usuário escolheu
   printf("\n");
   displayChoiceHeading("Remover produto");
 
   // Inputs
-  printInput("Codigo do produto");
+  printInput("Código do produto");
   scanf("%d", &cod);
 
-  for (int i = 0; i < totalProducts; ++i) {
-    printf("%s", &products[i].name);
+  // Se for um código inválido, dispara um erro
+  if(cod < 1) {
+    printError(errorMsg);
+    pressAnyContinue();
+    return;
   }
+
+  // Pesquisa pelo item e para quando encontrar
+  for (i = 0; i < totalProducts; ++i) {
+    if(products[i].cod == cod) {
+      // Guarda a posição
+      foundIndex = i;
+      break;
+    }
+  }
+
+  if(foundIndex == -1) {
+    printError(errorMsg);
+  } else {
+    productsReport();
+    // Remove o elemento movendo suas posições pra esquerda
+    for (i = foundIndex + 1; i < totalProducts; ++i) {
+      int currentPos = i - 1;
+      // Pega a posição atual e substitui pela seguinte
+      products[currentPos] = products[i];
+    }
+
+    // Atualiza a contagem total de produtos
+    totalProducts--;
+    printSuccess("Produto removido");
+  }
+
+  printf("\n");
+  pressAnyContinue();
 }
 
 void productsReport() {
@@ -274,16 +306,15 @@ void productsReport() {
       printf("[%d]\t", i + 1);
       printf("Código: %d\n\t", products[i].cod);
       printf("Nome: %s\t", products[i].name);
-      printf("Valor: R$ %.2f\n", products[i].amount);
+      printf("Valor: R$ %.2f\n", products[i].price);
       printLine(MAX_STR_LENGTH, false);
+      printf("\n");
     }
   } else {
     printError("Nenhum produto cadastrado no momento!\n");
   }
 
-  pressAnyContinue("Pressione qualquer tecla para continuar...");
-  fflush(stdin); // option ONE to clean stdin
-  getchar(); // wait for ENTER
+  pressAnyContinue();
 }
 
 // ──────────────────────────────────────
@@ -295,6 +326,23 @@ int main() {
 
   struct User user;
   int menuCode;
+
+
+  strcpy(products[0].name, "Teste 1\n");
+  products[0].cod = 100;
+  products[0].price = 5.75;
+
+  strcpy(products[1].name, "Teste 2\n");
+  products[1].cod = 200;
+  products[1].price = 24.10;
+
+  strcpy(products[2].name, "Teste 3\n");
+  products[2].cod = 300;
+  products[2].price = 24.10;
+
+  totalProducts = 3;
+
+  removeProduct();
 
   // Quanto de dinheiro o usuário tem quando abre o app
   // Esse valor pode ser uma consulta a um banco
