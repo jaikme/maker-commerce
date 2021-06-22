@@ -32,13 +32,14 @@ struct User {
 };
 
 struct Products {
-  char name[30];
+  char name[MAX_STR_LENGTH];
   int cod;
   float amount;
 };
 
+int totalProducts = 0, renderMenuHeader = false;
 struct Products products[MAX_PRODUCTS];
-int productsTotal = 0;
+
 
 /*
  typedef struct {
@@ -87,6 +88,20 @@ void printError(string value) {
   printf(RED "\n⛔️ %s" reset, value);
 }
 
+void printInput(string value) {
+  printf("%s%s: %s", value, HYELLOW, reset);
+}
+
+void printSuccess(string value) {
+  printf("\n✅ %s%s%s\n", HGRENN, value, reset);
+}
+
+void pressAnyContinue(string value) {
+  string buffer;
+  sprintf(buffer, HGRENN "\n→ %s\n" reset, value);
+  printInput(buffer);
+}
+
 // ──────────────────────────────────────
 // Métodos do Cabeçalho
 
@@ -116,7 +131,7 @@ void displayHeading(string value) {
   int width = BOX_WIDTH, length = calcLength(value);
 
   // Desenha o início da caixa do cabeçalho com cor amarela
-  printf("%s╔", HYELLOW);
+  printf("\n%s╔", HYELLOW);
   // Desenha a borda da caixa
   printDoubleLine(width);
   // Finaliza a primeira linha da caixa e inícia a próxima
@@ -143,7 +158,7 @@ void displayChoiceHeading(string value) {
   printLine(paddingWidth, false);
   printf(" %s ", value);
   printLine(paddingWidth, false);
-  printf("\n\n" reset);
+  printf(reset "\n");
 }
 
 
@@ -155,7 +170,7 @@ void displayText(string value) {
 }
 
 void displayMenuTitle(string value) {
-  printf("\n\n%s☞ %s%s", IYELLOW, value, reset);
+  printf("\n%s☞ %s%s", IYELLOW, value, reset);
 }
 
 void displayMenuItem(int index, string label) {
@@ -163,6 +178,9 @@ void displayMenuItem(int index, string label) {
 }
 
 void renderMenu() {
+  if(renderMenuHeader) {
+    displayHeading("MENU");
+  }
   /*
   * ╭─────────────────────────╮
   * │ OPÇÕES DE ADMINISTRAÇÃO │
@@ -173,8 +191,7 @@ void renderMenu() {
   displayMenuItem(IDX_REGISTER_PRODUCT, "Cadastrar produtos");
   displayMenuItem(IDX_REMOVE_PRODUCT, "Remover produto");
   displayMenuItem(IDX_REPORT_PRODUCT, "Relatório de produtos");
-
-
+  printf("\n");
 
   /*
    * ╭───────────────────╮
@@ -187,40 +204,90 @@ void renderMenu() {
   displayMenuItem(5, "Remove produtos");
   displayMenuItem(6, "Produtos selecionados");
   displayMenuItem(7, "Pagar");
+  printf("\n");
+
+
+  displayMenuTitle("Outros");
+  displayMenuItem(0, "Sair");
+
+  renderMenuHeader = true;
 }
 
 
 // ──────────────────────────────────────
 // Cadastro de produtos
-void printInput(string value) {
-  printf("%s%s: %s", value, HYELLOW, reset);
-}
 
 void registerProduct() {
 
-  if(productsTotal >= MAX_PRODUCTS) {
+  // Valida a quantidade de produtos que podem ser cadastrados
+  if(totalProducts >= MAX_PRODUCTS) {
     printError("Número máximo de produtos cadastrados!");
     return;
   }
 
+
+
+  // Cabeçalho do que o usuário escolheu
   printf("\n");
   displayChoiceHeading("Cadastrar produto");
 
-
+  // Inputs
   printInput("Codigo do produto");
-  scanf("%d", &products[productsTotal].cod);
+  scanf("%d", &products[totalProducts].cod);
 
   printInput("Nome do produto");
-  // printf("  Nome do produto: \n  %s→%s ", HGRENN, reset);
-  scanf("%s", &products[productsTotal].name);
+  fflush(stdin);
+  fgets(products[totalProducts].name, MAX_STR_LENGTH, stdin);
 
   printInput("Valor do Produto");
-  scanf("%f", &products[productsTotal].amount);
+  scanf("%f", &products[totalProducts].amount);
 
-  puts("✅ Produto cadastrado\n");
+  totalProducts++;
 
-  productsTotal++;
+  // Feedback de que o porduto foi cadastrado
+  printSuccess("Produto cadastrado");
 }
+
+void removeProduct() {
+  int cod;
+  // Cabeçalho do que o usuário escolheu
+  printf("\n");
+  displayChoiceHeading("Remover produto");
+
+  // Inputs
+  printInput("Codigo do produto");
+  scanf("%d", &cod);
+
+  for (int i = 0; i < totalProducts; ++i) {
+    printf("%s", &products[i].name);
+  }
+}
+
+void productsReport() {
+  // Cabeçalho do que o usuário escolheu
+  printf("\n");
+  displayChoiceHeading("Relatório de produtos");
+
+  if(totalProducts > 0) {
+    for (int i = 0; i < totalProducts; ++i) {
+      // Posição e propriedades do item na tabela
+      printf("[%d]\t", i + 1);
+      printf("Código: %d\n\t", products[i].cod);
+      printf("Nome: %s\t", products[i].name);
+      printf("Valor: R$ %.2f\n", products[i].amount);
+      printLine(MAX_STR_LENGTH, false);
+    }
+  } else {
+    printError("Nenhum produto cadastrado no momento!\n");
+  }
+
+  pressAnyContinue("Pressione qualquer tecla para continuar...");
+  fflush(stdin); // option ONE to clean stdin
+  getchar(); // wait for ENTER
+}
+
+// ──────────────────────────────────────
+// Ponto de entrada
 
 int main() {
   // Aceitando Acentos
@@ -237,7 +304,7 @@ int main() {
   displayHeading(HEADER_NAME);
 
   // Mostra mensagem de boas vindas
-  displayText("BEM-VINDO, SELECIONE UMA OPÇÃO:");
+  displayText("BEM-VINDO, SELECIONE UMA OPÇÃO:\n");
 
   // Renderiza menu e computa ações do usuário
   do {
@@ -248,6 +315,14 @@ int main() {
 
       case IDX_REGISTER_PRODUCT:
         registerProduct();
+        break;
+
+      case IDX_REMOVE_PRODUCT:
+        removeProduct();
+        break;
+
+      case IDX_REPORT_PRODUCT:
+        productsReport();
         break;
 
       default:
