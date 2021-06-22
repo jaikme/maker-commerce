@@ -1,7 +1,11 @@
+//
+// Created by Jaime Costa on 21/06/21.
+//
+
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 #include <locale.h>
 #include "ANSI-color-codes.h"
 
@@ -12,8 +16,8 @@ void productsReport();
 // ──────────────────────────────────────
 // Definições globais
 #define HEADER_NAME "SUNLIGHT YELLOW"
-#define MAX_STR_LENGTH 64
-#define BOX_WIDTH 60
+#define MAX_STR_LENGTH 60
+#define BOX_WIDTH 40
 #define MAX_PRODUCTS 3
 
 // ──────────────────────────────────────
@@ -26,50 +30,36 @@ const int IDX_REGISTER_PRODUCT = 1;
 const int IDX_REMOVE_PRODUCT = 2;
 const int IDX_REPORT_PRODUCT = 3;
 
+const int IDX_CHOSEN_SELECT = 4;
+const int IDX_CHOSEN_REMOVE = 5;
+const int IDX_PRODUCTS_CHOSEN = 6;
+const int IDX_PRODUCTS_PAY = 7;
+
 // ──────────────────────────────────────
 // Variáveis e estruturas
 struct User {
-  int balance;
+  float balance;
 };
 
+struct User user;
+
+//// produtos
 struct Products {
   char name[MAX_STR_LENGTH];
   int cod;
   float price;
 };
 
-int totalProducts = 0, renderMenuHeader = false;
+int totalProducts = 0, totalChosen = 0, renderMenuHeader = false;
 struct Products products[MAX_PRODUCTS];
 
-
-/*
- typedef struct {
-      char nome[30];
-      float matematica, fisica, media;
-  } Alunos;
- */
-
-/*
-typedef struct {
-  int index;
-  char label;
-} MenuOption;
- */
-
-/* typedef struct {
-  char nomeProd[30], categoria[20], descricao[70] ;
-  int codigo, qtdEst, qtdMinEst;
-  float valor;
-} Produto;
-
-struct Estoque {
-  Produto produtos;
+//// carrinho
+struct ProductsChosenCart {
+  struct Products products[MAX_PRODUCTS];
+  float total;
 };
 
-struct MenuItem {
-  char value[30];
-}; */
-
+struct ProductsChosenCart cart[MAX_PRODUCTS];
 
 // ──────────────────────────────────────
 // Métodos de utilidades
@@ -203,10 +193,10 @@ void renderMenu() {
    */
   displayMenuTitle("Opções de arrecadação:");
 
-  displayMenuItem(4, "Selecionar produto para arrecadar");
-  displayMenuItem(5, "Cancelar uma produto");
-  displayMenuItem(6, "Produtos selecionados");
-  displayMenuItem(7, "Pagar");
+  displayMenuItem(IDX_CHOSEN_SELECT, "Selecionar produto para arrecadar");
+  displayMenuItem(IDX_CHOSEN_REMOVE, "Desconsiderar uma produto selecionado");
+  displayMenuItem(IDX_PRODUCTS_CHOSEN, "Produtos selecionados");
+  displayMenuItem(IDX_PRODUCTS_PAY, "Pagar");
   printf("\n");
 
   displayMenuTitle("Outros");
@@ -224,6 +214,7 @@ void registerProduct() {
   // Valida a quantidade de produtos que podem ser cadastrados
   if(totalProducts >= MAX_PRODUCTS) {
     printError("Número máximo de produtos cadastrados!\n");
+    pressAnyContinue();
     return;
   }
 
@@ -278,7 +269,6 @@ void removeProduct() {
   if(foundIndex == -1) {
     printError(errorMsg);
   } else {
-    productsReport();
     // Remove o elemento movendo suas posições pra esquerda
     for (i = foundIndex + 1; i < totalProducts; ++i) {
       int currentPos = i - 1;
@@ -291,8 +281,16 @@ void removeProduct() {
     printSuccess("Produto removido");
   }
 
-  printf("\n");
   pressAnyContinue();
+}
+
+void displayProductRow(int i, int cod, string name, float price) {
+  printf("[%d]\t", i);
+  printf("Código: %d\n\t", cod);
+  printf("Nome: %s\t", name);
+  printf("Valor: R$ %.2f\n", price);
+  printLine(BOX_WIDTH, false);
+  printf("\n");
 }
 
 void productsReport() {
@@ -303,12 +301,7 @@ void productsReport() {
   if(totalProducts > 0) {
     for (int i = 0; i < totalProducts; ++i) {
       // Posição e propriedades do item na tabela
-      printf("[%d]\t", i + 1);
-      printf("Código: %d\n\t", products[i].cod);
-      printf("Nome: %s\t", products[i].name);
-      printf("Valor: R$ %.2f\n", products[i].price);
-      printLine(MAX_STR_LENGTH, false);
-      printf("\n");
+      displayProductRow(i + 1, products[i].cod, products[i].name, products[i].price);
     }
   } else {
     printError("Nenhum produto cadastrado no momento!\n");
@@ -317,14 +310,62 @@ void productsReport() {
   pressAnyContinue();
 }
 
-// ──────────────────────────────────────
+void productsChosen(bool showTotal, bool askPay) {
+// Cabeçalho do que o usuário escolheu
+  printf("\n");
+  displayChoiceHeading(askPay ? "Pagar" : "Produtos selecionados");
+
+  if(cart > 0) {
+    float total = 0;
+
+    for (int i = 0; i < 1; ++i) {
+      for (int o = 0; o < totalChosen; ++o) {
+        // Posição e propriedades do item na tabela
+        struct Products p = cart[i].products[o];
+        displayProductRow(o + 1, p.cod, p.name, p.price);
+        total += p.price;
+      }
+    }
+    if(showTotal) {
+      printf(BBLK YELB " =\tTOTAL: R$ %.2f   " reset "\n", total);
+    }
+
+    if(askPay) {
+      string answer;
+      printf("\n\n" YEL "💳\tSaldo: R$ %.2f", user.balance);
+      printInput(BHWHT "\n\tDeseja realmente pagar? " reset MAG "S" reset "im / " MAG "N" reset "ão" );
+      fflush(stdin);
+      scanf("%s", answer);
+      for(int k = 0; answer[k]; k++){
+        answer[k] = tolower(answer[k]);
+      }
+
+      if(
+          strcmp(answer, "sim") == 0 ||
+          strcmp(answer, "s") == 0)
+      {
+        //
+        user.balance -= total;
+        printf(BLU "\n🎉 Parabéns - Você arrecadou os produtos com sucesso!\n" reset);
+        printf("\n💰 Novo saldo: " BBLK YELB " R$ %.2f " reset, user.balance);
+        printf("\n");
+      }
+    }
+
+  } else {
+    printError("Você ainda não possui produto(s) selecionado(s)!\n");
+  }
+
+  fflush(stdin);
+  pressAnyContinue();
+}
+
+// ──────────────────────────────────────6
 // Ponto de entrada
 
 int main() {
   // Aceitando Acentos
   setlocale (LC_ALL, "");
-
-  struct User user;
   int menuCode;
 
 
@@ -342,11 +383,13 @@ int main() {
 
   totalProducts = 3;
 
-  removeProduct();
+  cart[0].products[0] = products[1];
+  cart[0].total = 24.10;
+  totalChosen = 1;
 
   // Quanto de dinheiro o usuário tem quando abre o app
   // Esse valor pode ser uma consulta a um banco
-  user.balance = 1375;
+  user.balance = 45.75;
 
   // Começa entrada do menu e boas vindas
   displayHeading(HEADER_NAME);
@@ -371,6 +414,14 @@ int main() {
 
       case IDX_REPORT_PRODUCT:
         productsReport();
+        break;
+
+      case IDX_PRODUCTS_CHOSEN:
+        productsChosen(true, false);
+        break;
+
+      case IDX_PRODUCTS_PAY:
+        productsChosen(true, true);
         break;
 
       default:
