@@ -384,7 +384,7 @@ void selectProduct() {
     displayProductRow(foundIndex + 1, chosen.cod, chosen.name, chosen.price);
     // Atualiza a contagem total de produtos
     totalChosen++;
-    printf("totalChosen = %d", totalChosen);
+
     // Adiciona no carrinho
     cart.products[totalChosen - 1] = chosen;
     cart.total += chosen.price;
@@ -475,8 +475,8 @@ void productsChosen(bool showTotal, bool askPay) {
 
     if(askPay) {
       string answer;
-      printf("\n\n" YEL "💳\tSaldo: R$ %.2f", user.balance);
-      printInput(BHWHT "\n\tDeseja realmente pagar? " reset MAG "S" reset "im / " MAG "N" reset "ão" );
+      printf("\n\n" YEL "💳 Saldo: R$ %.2f", user.balance);
+      printInput(BHWHT "\n   Deseja realmente pagar? " reset MAG "S" reset "im / " MAG "N" reset "ão" );
       fflush(stdin);
       scanf("%s", answer);
       for(int k = 0; answer[k]; k++){
@@ -529,29 +529,29 @@ int main() {
   setlocale (LC_ALL, "");
   int menuCode;
 
-    //Remover comentários para começar com dados prontos para testes em desenvolvimento
+  //Remover comentários para começar com dados prontos para testes em desenvolvimento
+  /*
+  strcpy(products[0].name, "Pack 6 Garrafas de D'Água");
+  products[0].cod = 100;
+  products[0].price = 5.75;
 
-    strcpy(products[0].name, "Pack 6 Garrafas de D'Água");
-    products[0].cod = 100;
-    products[0].price = 5.75;
+  strcpy(products[1].name, "Cesta Básica");
+  products[1].cod = 200;
+  products[1].price = 24.10;
 
-    strcpy(products[1].name, "Cesta Básica");
-    products[1].cod = 200;
-    products[1].price = 24.10;
+  strcpy(products[2].name, "Kit Médico");
+  products[2].cod = 300;
+  products[2].price = 124.10;
 
-    strcpy(products[2].name, "Kit Médico");
-    products[2].cod = 300;
-    products[2].price = 124.10;
+  totalProducts = 3;
+  */
 
-    totalProducts = 3;
-    /**/
-
-    //Remover comentários para começar com carrinho preenchido
-
-    cart.products[0] = products[0];
-    cart.total = products[0].price;
-    totalChosen = 1;
-  /**/
+  //Remover comentários para começar com carrinho preenchido
+  /*
+  cart.products[0] = products[0];
+  cart.total = products[0].price;
+  totalChosen = 1;
+  */
 
 
   // Informações do usuário
