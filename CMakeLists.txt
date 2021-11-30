@@ -3,4 +3,4 @@ project(maker_commerce C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(maker_commerce main.c ANSI-color-codes.h)
+add_executable(maker_commerce main.c)

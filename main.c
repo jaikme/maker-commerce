@@ -1,13 +1,40 @@
 //
 // Created by Jaime Costa on 21/06/21.
 //
-
+// C11
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
 #include <locale.h>
-#include "ANSI-color-codes.h"
+
+// ──────────────────────────────────────
+// Definições de cores
+#define RED "\e[0;31m"
+#define GRN "\e[0;32m"
+#define YEL "\e[0;33m"
+#define BLU "\e[0;34m"
+#define MAG "\e[0;35m"
+#define CYN "\e[0;36m"
+
+// Texto regular bold
+#define BYEL "\e[1;33m"
+
+// Texto intenso
+#define HGRENN "\e[0;92m"
+#define HYELLOW "\e[0;93m"
+#define HMAG "\e[0;95m"
+#define HCYN "\e[0;96m"
+
+// Bold texto intenso
+#define BHWHT "\e[1;97m"
+
+// Customizado
+#define IYELLOW "\e[3;93m"
+#define IBBYELLOW "\x1b[1;43m\x1b[38;2;0;0;0m"
+
+//Reset
+#define reset "\e[0m"
 
 // Protótipos de funções
 int getMenuOption();
@@ -211,7 +238,7 @@ void renderMenu() {
   */
   displayMenuTitle("Opções de administração:");
 
-  displayMenuItem(IDX_REGISTER_PRODUCT, "Cadastrar/Atualizar produto");
+  displayMenuItem(IDX_REGISTER_PRODUCT, "Cadastrar produto");
   displayMenuItem(IDX_REMOVE_PRODUCT, "Remover produto");
   displayMenuItem(IDX_REPORT_PRODUCT, "Relatório de produtos");
   printf("\n");
@@ -266,7 +293,9 @@ void registerProduct() {
   totalProducts++;
 
   // Feedback de que o porduto foi cadastrado
-  printSuccess("Produto cadastrado");
+  printSuccess("Produto cadastrado\n");
+
+  pressAnyContinue();
 }
 
 void removeProduct() {
@@ -530,7 +559,6 @@ int main() {
   int menuCode;
 
   //Remover comentários para começar com dados prontos para testes em desenvolvimento
-  /*
   strcpy(products[0].name, "Pack 6 Garrafas de D'Água");
   products[0].cod = 100;
   products[0].price = 5.75;
@@ -539,12 +567,15 @@ int main() {
   products[1].cod = 200;
   products[1].price = 24.10;
 
-  strcpy(products[2].name, "Kit Médico");
+  strcpy(products[2].name, "Brinquedos");
   products[2].cod = 300;
-  products[2].price = 124.10;
+  products[2].price = 2.10;
+
+  strcpy(products[3].name, "Kit Primeiros Socorros");
+  products[3].cod = 400;
+  products[3].price = 42.10;
 
   totalProducts = 3;
-  */
 
   //Remover comentários para começar com carrinho preenchido
   /*

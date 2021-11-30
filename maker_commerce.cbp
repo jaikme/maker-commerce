@@ -78,9 +78,6 @@
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="/Users/jaikme/UVA-Workspace/maker-commerce/ANSI-color-codes.h">
-			<Option target="maker_commerce"/>
-		</Unit>
 		<Unit filename="/Users/jaikme/UVA-Workspace/maker-commerce/main.c">
 			<Option target="maker_commerce"/>
 		</Unit>
